@@ -1,0 +1,242 @@
+[
+    {
+        "id": "f6f2187d.f17ca8",
+        "type": "tab",
+        "label": "SimGPS",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "56fbf48646d6e6b4",
+        "type": "mqtt out",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "topic": "simulate/gps/position",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "4cb9b9a91f678948",
+        "x": 1260,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "8d6a0c132d2eb9e4",
+        "type": "csv",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "spec": "rfc",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "none",
+        "multi": "mult",
+        "ret": "\\r\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 530,
+        "y": 220,
+        "wires": [
+            [
+                "d4f7a861d0a8a447"
+            ]
+        ]
+    },
+    {
+        "id": "f67c85500dee6dc4",
+        "type": "file in",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "filename": "/data/uploads/silesiaRing2025.csv",
+        "filenameType": "str",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 260,
+        "y": 220,
+        "wires": [
+            [
+                "8d6a0c132d2eb9e4"
+            ]
+        ]
+    },
+    {
+        "id": "c6065ce21b5ee516",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 1",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1040,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "85f00e5a4feee28d",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "RUN",
+        "props": [
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "START",
+        "payloadType": "str",
+        "x": 90,
+        "y": 140,
+        "wires": [
+            [
+                "f67c85500dee6dc4",
+                "20e03349974f6185"
+            ]
+        ]
+    },
+    {
+        "id": "d4f7a861d0a8a447",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "send Rnd ",
+        "func": "const coords = msg.payload;\n\nfunction getRndInteger(min, max) {\n    return Math.floor(Math.random() * (max - min + 1)) + min;\n}\n\nasync function delay(ms) {\n    return new Promise(resolve => setTimeout(resolve, ms));\n}\n\nlet i = flow.get(\"simIndex\");\nif (i == undefined) {\n    i = 0;\n}\nwhile (true){\n    i += getRndInteger(3, 6);\n    flow.set(\"simIndex\",i);\n    if (flow.get(\"state\") == \"STOP\"){\n        break;\n    }\n\n    if (i <= coords.length){\n        let delayTime = getRndInteger(200, 300);\n        await delay(delayTime);\n        msg.payload = coords[i];\n        node.send(msg);\n    }\n\n    else{\n        flow.set(\"simIndex\",0);\n        msg.payload = 1;\n        return[null,msg]\n    }\n}",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 220,
+        "wires": [
+            [
+                "d0c5850d89c39161",
+                "c6065ce21b5ee516"
+            ],
+            [
+                "f67c85500dee6dc4"
+            ]
+        ]
+    },
+    {
+        "id": "d0c5850d89c39161",
+        "type": "json",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 990,
+        "y": 160,
+        "wires": [
+            [
+                "56fbf48646d6e6b4"
+            ]
+        ]
+    },
+    {
+        "id": "7b5ecf9b3e6373db",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "STOP",
+        "props": [
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "STOP",
+        "payloadType": "str",
+        "x": 90,
+        "y": 80,
+        "wires": [
+            [
+                "20e03349974f6185"
+            ]
+        ]
+    },
+    {
+        "id": "20e03349974f6185",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "state",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 310,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4cb9b9a91f678948",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "tome.lu",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    }
+]
